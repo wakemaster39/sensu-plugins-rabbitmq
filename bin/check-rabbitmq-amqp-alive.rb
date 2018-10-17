@@ -72,6 +72,11 @@ class CheckRabbitAMQPAlive < Sensu::Plugin::Check::CLI
          description: 'TLS Private Key to use when connecting',
          long: '--tls-key KEY',
          default: nil
+  
+  option :ca_certs,
+         description: 'CA Cert to use when verifying',
+         long: '--ca-certs CERT',
+         default: nil
 
   option :no_verify_peer,
          description: 'Disable peer verification',
@@ -113,8 +118,9 @@ class CheckRabbitAMQPAlive < Sensu::Plugin::Check::CLI
     port           = config[:port]
     vhost          = config[:vhost]
     ssl            = config[:ssl]
-    tls_cert       = config[:tls_cert]
+    tls_certs      = config[:tls_cert]
     tls_key        = config[:tls_key]
+    ca_certs       = config[:ca_certs]
     no_verify_peer = config[:no_verify_peer]
     heartbeat      = config[:heartbeat]
     threaded       = config[:threaded]
@@ -131,11 +137,12 @@ class CheckRabbitAMQPAlive < Sensu::Plugin::Check::CLI
 
     begin
       conn = Bunny.new("amqp#{ssl ? 's' : ''}://#{username}:#{password}@#{host}:#{port}/#{vhost}",
-                       tls_cert:    tls_cert,
-                       tls_key:     tls_key,
-                       verify_peer: no_verify_peer,
-                       heartbeat:   heartbeat,
-                       threaded:    threaded)
+                       tls_cert:            tls_cert,
+                       tls_key:             tls_key,
+                       tls_ca_certificates: ca_certs,
+                       verify_peer:         no_verify_peer,
+                       heartbeat:           heartbeat,
+                       threaded:            threaded)
       conn.start
       conn.close if conn.connected?
       { 'status' => 'ok', 'message' => 'RabbitMQ server is alive' }
